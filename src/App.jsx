@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
+import animationOptions from "./config/animation-options.json";
 
 const initialData = {
   lessonId: "lesson_intro_001",
@@ -19,18 +20,7 @@ const initialData = {
   background: "",
   backgroundFileName: "",
   characters: ["billy", "teddy"],
-  dialogueNodes: [
-    {
-      id: "node_001",
-      speakerId: "billy",
-      text: "Hello there! My name is Billy, and I am very happy to meet you today!",
-      duration: 4500,
-      audio: "",
-      audioFileName: "",
-      animations: [],
-      next: "",
-    },
-  ],
+  dialogueNodes: [],
 };
 
 function createDialogueNode(index = 1) {
@@ -95,6 +85,16 @@ function App() {
   const targetNodeOptions = useMemo(
     () => nodeIdOptions.filter((nodeId) => nodeId !== selectedNodeId),
     [nodeIdOptions, selectedNodeId],
+  );
+  const characterIdOptions = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(animationOptions.characterIds || []),
+          ...(lesson.characters || []),
+        ]),
+      ).filter(Boolean),
+    [lesson.characters],
   );
 
   const outputJson = useMemo(() => {
@@ -397,7 +397,10 @@ function App() {
 
       if (result.ok) {
         updateNodeFieldById(selectedNode.id, "audio", result.path);
-        updateLessonField("uploadStatus", `Uploaded audio: ${pending.file.name}`);
+        updateLessonField(
+          "uploadStatus",
+          `Uploaded audio: ${pending.file.name}`,
+        );
       } else {
         updateLessonField(
           "uploadStatus",
@@ -1108,11 +1111,13 @@ function App() {
               </div>
               {!isInteractionNode(selectedNode) ? (
                 <p>
-                  Total subAction duration: {totalSubActionDuration}ms / Node duration:{" "}
-                  {Number(selectedNode.duration) || 0}ms
+                  Total subAction duration: {totalSubActionDuration}ms / Node
+                  duration: {Number(selectedNode.duration) || 0}ms
                 </p>
               ) : null}
-              {subActionDurationError ? <p className="danger">{subActionDurationError}</p> : null}
+              {subActionDurationError ? (
+                <p className="danger">{subActionDurationError}</p>
+              ) : null}
 
               {(selectedNode.animations || []).map(
                 (animation, animationIndex) => (
@@ -1133,7 +1138,7 @@ function App() {
 
                     <label>
                       Character ID
-                      <input
+                      <select
                         value={animation.characterId || ""}
                         onChange={(event) =>
                           updateAnimation(
@@ -1142,7 +1147,14 @@ function App() {
                             event.target.value,
                           )
                         }
-                      />
+                      >
+                        <option value="">-- Select character --</option>
+                        {characterIdOptions.map((characterId) => (
+                          <option key={characterId} value={characterId}>
+                            {characterId}
+                          </option>
+                        ))}
+                      </select>
                     </label>
 
                     <div className="section-head">
@@ -1224,7 +1236,7 @@ function App() {
                             </label>
                             <label>
                               Anim
-                              <input
+                              <select
                                 value={subAction.anim || ""}
                                 onChange={(event) =>
                                   updateSubAction(
@@ -1234,11 +1246,18 @@ function App() {
                                     event.target.value,
                                   )
                                 }
-                              />
+                              >
+                                <option value="">-- Select anim --</option>
+                                {(animationOptions.animations || []).map((anim) => (
+                                  <option key={anim} value={anim}>
+                                    {anim}
+                                  </option>
+                                ))}
+                              </select>
                             </label>
                             <label>
                               Expression
-                              <input
+                              <select
                                 value={subAction.expression || ""}
                                 onChange={(event) =>
                                   updateSubAction(
@@ -1248,7 +1267,14 @@ function App() {
                                     event.target.value,
                                   )
                                 }
-                              />
+                              >
+                                <option value="">-- Select expression --</option>
+                                {(animationOptions.expressions || []).map((expression) => (
+                                  <option key={expression} value={expression}>
+                                    {expression}
+                                  </option>
+                                ))}
+                              </select>
                             </label>
                             <label>
                               Look At

@@ -1,0 +1,17 @@
+{
+  "characterIds": ["billy", "teddy"],
+  "animations": [
+    "Bow",
+    "Clapping",
+    "Crying",
+    "HandForward",
+    "HeadShake",
+    "Idle",
+    "Listening",
+    "Thinking",
+    "Walking",
+    "Waving",
+    "WavingUp"
+  ],
+  "expressions": ["happy", "sad"]
+}
