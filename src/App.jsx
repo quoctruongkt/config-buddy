@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import ReactFlow, { MarkerType, Position } from "reactflow";
+import "reactflow/dist/style.css";
 import "./App.css";
 import animationOptions from "./config/animation-options.json";
 
@@ -23,6 +25,8 @@ const initialData = {
   dialogueNodes: [],
 };
 
+const movePositionOptions = ["out-left", "left", "out-right", "right", "center"];
+
 function createDialogueNode(index = 1) {
   return {
     id: `node_${String(index).padStart(3, "0")}`,
@@ -32,6 +36,7 @@ function createDialogueNode(index = 1) {
     audio: "",
     audioFileName: "",
     animations: [],
+    moves: [],
     next: "",
   };
 }
@@ -52,6 +57,7 @@ function createInteractionNode(index = 1) {
       onTimeout: "",
     },
     animations: [],
+    moves: [],
   };
 }
 
@@ -66,6 +72,9 @@ function App() {
   );
   const [pendingAudioByNode, setPendingAudioByNode] = useState({});
   const [ttsTextByNode, setTtsTextByNode] = useState({});
+  const [characterPicker, setCharacterPicker] = useState(
+    animationOptions.characterIds?.[0] || "",
+  );
   const [loading, setLoading] = useState({
     backgroundUpload: false,
     ttsGenerate: false,
@@ -87,15 +96,15 @@ function App() {
     [nodeIdOptions, selectedNodeId],
   );
   const characterIdOptions = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...(animationOptions.characterIds || []),
-          ...(lesson.characters || []),
-        ]),
-      ).filter(Boolean),
+    () => (lesson.characters || []).filter(Boolean),
     [lesson.characters],
   );
+  const speakerOptions = useMemo(() => {
+    if (!selectedNode) return characterIdOptions;
+    return isInteractionNode(selectedNode)
+      ? Array.from(new Set([...characterIdOptions, "user"]))
+      : characterIdOptions;
+  }, [selectedNode, characterIdOptions]);
 
   const outputJson = useMemo(() => {
     const normalizedNodes = lesson.dialogueNodes.map((node) => {
@@ -114,6 +123,16 @@ function App() {
             ? { textSegment: subAction.textSegment }
             : {}),
         })),
+      }));
+      const cleanedMoves = (node.moves || []).map((move) => ({
+        characterId: move.characterId || "",
+        startTime: Number(move.startTime) || 0,
+        duration: Number(move.duration) || 0,
+        from: movePositionOptions.includes(move.from) ? move.from : "center",
+        to: movePositionOptions.includes(move.to) ? move.to : "center",
+        ...(move.rotateWithMovement !== undefined
+          ? { rotateWithMovement: !!move.rotateWithMovement }
+          : {}),
       }));
 
       if (isInteractionNode(node)) {
@@ -134,6 +153,7 @@ function App() {
             onTimeout: node.responses?.onTimeout || "",
           },
           animations: cleanedAnimations,
+          moves: cleanedMoves,
         };
       }
 
@@ -144,6 +164,7 @@ function App() {
         duration: Number(node.duration) || 0,
         audio: node.audio || "",
         animations: cleanedAnimations,
+        moves: cleanedMoves,
         ...(node.next ? { next: node.next } : {}),
       };
     });
@@ -251,13 +272,19 @@ function App() {
     setLoading((prev) => ({ ...prev, backgroundUpload: false }));
   }
 
-  function updateCharacters(textValue) {
-    const characters = textValue
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+  function addCharacterFromPicker() {
+    if (!characterPicker) return;
+    setLesson((prev) => {
+      if ((prev.characters || []).includes(characterPicker)) return prev;
+      return { ...prev, characters: [...(prev.characters || []), characterPicker] };
+    });
+  }
 
-    setLesson((prev) => ({ ...prev, characters }));
+  function removeCharacter(characterId) {
+    setLesson((prev) => ({
+      ...prev,
+      characters: (prev.characters || []).filter((id) => id !== characterId),
+    }));
   }
 
   function updateSelectedNodeField(field, value) {
@@ -481,6 +508,7 @@ function App() {
           onTimeout: "",
         },
         animations: selectedNode.animations || [],
+        moves: selectedNode.moves || [],
       };
       replaceSelectedNode(converted);
     }
@@ -494,6 +522,7 @@ function App() {
         audio: "",
         audioFileName: "",
         animations: selectedNode.animations || [],
+        moves: selectedNode.moves || [],
         next: "",
       };
       replaceSelectedNode(converted);
@@ -594,6 +623,32 @@ function App() {
     updateSelectedNodeField("animations", next);
   }
 
+  function addMove() {
+    if (!selectedNode) return;
+    const next = [
+      ...(selectedNode.moves || []),
+      {
+        characterId: "",
+        startTime: 0,
+        duration: 0,
+        from: "center",
+        to: "center",
+      },
+    ];
+    updateSelectedNodeField("moves", next);
+  }
+
+  function updateMove(moveIndex, field, value) {
+    const next = [...(selectedNode.moves || [])];
+    next[moveIndex] = { ...next[moveIndex], [field]: value };
+    updateSelectedNodeField("moves", next);
+  }
+
+  function deleteMove(moveIndex) {
+    const next = (selectedNode.moves || []).filter((_, index) => index !== moveIndex);
+    updateSelectedNodeField("moves", next);
+  }
+
   async function copyJson() {
     try {
       await navigator.clipboard.writeText(outputJson);
@@ -612,6 +667,81 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  async function importJsonConfig(file) {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const importedNodes = Array.isArray(parsed?.dialogueNodes)
+        ? parsed.dialogueNodes
+        : [];
+
+      const normalizedNodes = importedNodes.map((node, index) => {
+        const baseNode = {
+          id: node?.id || `node_${String(index + 1).padStart(3, "0")}`,
+          speakerId: node?.speakerId || "",
+          animations: Array.isArray(node?.animations) ? node.animations : [],
+          moves: Array.isArray(node?.moves)
+            ? node.moves.map((move) => ({
+                characterId: move?.characterId || "",
+                startTime: Number(move?.startTime) || 0,
+                duration: Number(move?.duration) || 0,
+                from: movePositionOptions.includes(move?.from) ? move.from : "center",
+                to: movePositionOptions.includes(move?.to) ? move.to : "center",
+                ...(move?.rotateWithMovement !== undefined
+                  ? { rotateWithMovement: !!move.rotateWithMovement }
+                  : {}),
+              }))
+            : [],
+        };
+
+        if (node?.interactionData) {
+          return {
+            ...baseNode,
+            interactionData: {
+              mode: node.interactionData?.mode || "speech_recognition",
+              expectedKeywords: Array.isArray(
+                node.interactionData?.expectedKeywords,
+              )
+                ? node.interactionData.expectedKeywords
+                : [],
+              maxRetries: Number(node.interactionData?.maxRetries) || 0,
+              timeout: Number(node.interactionData?.timeout) || 0,
+            },
+            responses: {
+              onSuccess: node?.responses?.onSuccess || "",
+              onFail: node?.responses?.onFail || "",
+              onTimeout: node?.responses?.onTimeout || "",
+            },
+          };
+        }
+
+        return {
+          ...baseNode,
+          text: node?.text || "",
+          duration: Number(node?.duration) || 0,
+          audio: node?.audio || "",
+          audioFileName: node?.audioFileName || "",
+          next: node?.next || "",
+        };
+      });
+
+      setLesson((prev) => ({
+        ...prev,
+        lessonId: parsed?.lessonId || prev.lessonId,
+        background: parsed?.background || "",
+        characters: Array.isArray(parsed?.characters) ? parsed.characters : [],
+        dialogueNodes: normalizedNodes,
+        uploadStatus: `Imported JSON: ${file.name}`,
+      }));
+      setSelectedNodeId(normalizedNodes[0]?.id || "");
+      setPendingAudioByNode({});
+      setSubActionDurationError("");
+    } catch {
+      updateLessonField("uploadStatus", `Import failed: ${file.name}`);
+    }
+  }
+
   const pendingAudio = selectedNode
     ? pendingAudioByNode[selectedNode.id]
     : null;
@@ -625,6 +755,56 @@ function App() {
       return sum + subTotal;
     }, 0);
   }, [selectedNode]);
+  const relationshipGraph = useMemo(() => {
+    const idSet = new Set(nodeIdOptions);
+    const flowNodes = lesson.dialogueNodes.map((node, index) => ({
+      id: node.id,
+      data: {
+        label: `${node.id} (${isInteractionNode(node) ? "interaction" : "dialogue"})`,
+      },
+      position: {
+        x: 20,
+        y: 16 + index * 74,
+      },
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
+      style:
+        selectedNodeId === node.id
+          ? { border: "2px solid #11698e", borderRadius: 8, padding: "6px 10px", fontSize: 12, width: 180 }
+          : { border: "1px solid #c5d1dc", borderRadius: 8, padding: "6px 10px", fontSize: 12, width: 180 },
+    }));
+
+    const edges = [];
+    const pushEdge = (fromId, toId, label) => {
+      if (!toId || !idSet.has(toId)) return;
+      edges.push({
+        id: `${fromId}-${label}-${toId}`,
+        source: fromId,
+        target: toId,
+        label,
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { strokeWidth: 1.4, stroke: label === "next" ? "#11698e" : "#7a5ea6" },
+        labelStyle: { fontSize: 10 },
+      });
+    };
+
+    lesson.dialogueNodes.forEach((node) => {
+      if (isInteractionNode(node)) {
+        pushEdge(node.id, node.responses?.onSuccess, "onSuccess");
+        pushEdge(node.id, node.responses?.onFail, "onFail");
+        pushEdge(node.id, node.responses?.onTimeout, "onTimeout");
+      } else {
+        pushEdge(node.id, node.next, "next");
+      }
+    });
+
+    return { flowNodes, edges };
+  }, [lesson.dialogueNodes, nodeIdOptions, selectedNodeId]);
+  const graphHeight = useMemo(
+    () => Math.max(420, lesson.dialogueNodes.length * 86 + 40),
+    [lesson.dialogueNodes.length],
+  );
 
   useEffect(() => {
     setSubActionDurationError("");
@@ -647,6 +827,15 @@ function App() {
           <button type="button" onClick={downloadJson}>
             Download JSON
           </button>
+          <label>
+            <input
+              type="file"
+              accept="application/json,.json"
+              style={{ display: "none" }}
+              onChange={(event) => importJsonConfig(event.target.files?.[0])}
+            />
+            <span className="import-json-btn">Upload JSON</span>
+          </label>
         </div>
       </header>
 
@@ -789,13 +978,38 @@ function App() {
           <p>Picked background: {lesson.backgroundFileName}</p>
         ) : null}
         {lesson.uploadStatus ? <p>{lesson.uploadStatus}</p> : null}
-        <label>
-          Characters (comma separated)
-          <input
-            value={lesson.characters.join(", ")}
-            onChange={(event) => updateCharacters(event.target.value)}
-          />
-        </label>
+        <div>
+          <label>
+            Characters (from config json)
+            <select
+              value={characterPicker}
+              onChange={(event) => setCharacterPicker(event.target.value)}
+            >
+              {(animationOptions.characterIds || []).map((characterId) => (
+                <option key={characterId} value={characterId}>
+                  {characterId}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="actions">
+            <button type="button" onClick={addCharacterFromPicker}>
+              Add Character
+            </button>
+          </div>
+          <div className="actions">
+            {(lesson.characters || []).map((characterId) => (
+              <button
+                key={characterId}
+                type="button"
+                className="danger"
+                onClick={() => removeCharacter(characterId)}
+              >
+                Remove {characterId}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <main className="workspace">
@@ -813,19 +1027,28 @@ function App() {
           </div>
 
           <div className="node-items">
-            {lesson.dialogueNodes.map((node) => (
-              <button
-                key={node.id}
-                type="button"
-                className={`node-item ${selectedNodeId === node.id ? "active" : ""}`}
-                onClick={() => setSelectedNodeId(node.id)}
-              >
-                <span>{node.id}</span>
-                <small>
-                  {isInteractionNode(node) ? "interaction" : "dialogue"}
-                </small>
-              </button>
-            ))}
+            <small>Click node in graph to edit</small>
+          </div>
+
+          <h3>Relationship Graph</h3>
+          <div className="tree-view graph-view" style={{ height: graphHeight }}>
+            <ReactFlow
+              nodes={relationshipGraph.flowNodes}
+              edges={relationshipGraph.edges}
+              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+              minZoom={1}
+              maxZoom={1}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              elementsSelectable={false}
+              panOnDrag={false}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              zoomOnDoubleClick={false}
+              onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+            >
+              {null}
+            </ReactFlow>
           </div>
         </aside>
 
@@ -872,12 +1095,19 @@ function App() {
               <div className="grid two">
                 <label>
                   Speaker ID
-                  <input
+                  <select
                     value={selectedNode.speakerId || ""}
                     onChange={(event) =>
                       updateSelectedNodeField("speakerId", event.target.value)
                     }
-                  />
+                  >
+                    <option value="">-- Select speaker --</option>
+                    {speakerOptions.map((speakerId) => (
+                      <option key={speakerId} value={speakerId}>
+                        {speakerId}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 
@@ -1312,6 +1542,118 @@ function App() {
                   </article>
                 ),
               )}
+
+              <div className="section-head">
+                <h3>Moves</h3>
+                <button type="button" onClick={addMove}>
+                  + Move
+                </button>
+              </div>
+
+              {(selectedNode.moves || []).map((move, moveIndex) => (
+                <article className="animation-card" key={`${move.characterId}-${moveIndex}`}>
+                  <div className="section-head">
+                    <strong>Move #{moveIndex + 1}</strong>
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => deleteMove(moveIndex)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  <div className="grid three">
+                    <label>
+                      Character ID
+                      <select
+                        value={move.characterId || ""}
+                        onChange={(event) =>
+                          updateMove(moveIndex, "characterId", event.target.value)
+                        }
+                      >
+                        <option value="">-- Select character --</option>
+                        {characterIdOptions.map((characterId) => (
+                          <option key={`move-${characterId}`} value={characterId}>
+                            {characterId}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Start Time
+                      <input
+                        type="number"
+                        value={move.startTime ?? 0}
+                        onChange={(event) =>
+                          updateMove(moveIndex, "startTime", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Duration
+                      <input
+                        type="number"
+                        value={move.duration ?? 0}
+                        onChange={(event) =>
+                          updateMove(moveIndex, "duration", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      From
+                      <select
+                        value={move.from || "center"}
+                        onChange={(event) =>
+                          updateMove(moveIndex, "from", event.target.value)
+                        }
+                      >
+                        {movePositionOptions.map((position) => (
+                          <option key={`from-${moveIndex}-${position}`} value={position}>
+                            {position}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      To
+                      <select
+                        value={move.to || "center"}
+                        onChange={(event) =>
+                          updateMove(moveIndex, "to", event.target.value)
+                        }
+                      >
+                        {movePositionOptions.map((position) => (
+                          <option key={`to-${moveIndex}-${position}`} value={position}>
+                            {position}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Rotate With Movement
+                      <select
+                        value={move.rotateWithMovement ? "true" : "false"}
+                        onChange={(event) =>
+                          updateMove(
+                            moveIndex,
+                            "rotateWithMovement",
+                            event.target.value === "true",
+                          )
+                        }
+                      >
+                        <option value="false">false</option>
+                        <option value="true">true</option>
+                      </select>
+                    </label>
+                  </div>
+                </article>
+              ))}
             </>
           ) : (
             <p>No node selected. Add a dialogue or interaction node first.</p>
