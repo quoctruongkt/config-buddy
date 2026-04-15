@@ -1,0 +1,128 @@
+{
+  "lessonId": "lesson_family_002",
+  "background": "",
+  "backgroundMusicId": "",
+  "characters": ["billy", "teddy"],
+  "dialogueNodes": [
+    {
+      "id": "node_001",
+      "speakerId": "billy",
+      "text": "Teddy, do you love your mother?",
+      "duration": 3000,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_002"
+    },
+    {
+      "id": "node_002",
+      "speakerId": "teddy",
+      "text": "Yes, I do. I love my mother very much.",
+      "duration": 3000,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_003"
+    },
+    {
+      "id": "node_003",
+      "speakerId": "billy",
+      "text": "How about you, do you love your mother?",
+      "duration": 3200,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_004"
+    },
+    {
+      "id": "node_004",
+      "speakerId": "teddy",
+      "text": "You can say: Yes, I love my mother.",
+      "duration": 2800,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_005"
+    },
+    {
+      "id": "node_005",
+      "speakerId": "user",
+      "interactionData": {
+        "mode": "speech_recognition",
+        "expectedKeywords": ["I love my mother", "I love my mom"],
+        "maxRetries": 2,
+        "timeout": 6
+      },
+      "responses": {
+        "onSuccess": "node_006",
+        "onFail": "node_007",
+        "onTimeout": "node_007",
+        "onExhausted": "node_007"
+      },
+      "animations": [],
+      "moves": []
+    },
+    {
+      "id": "node_006",
+      "speakerId": "billy",
+      "text": "Great answer! You are a loving child.",
+      "duration": 2800,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_008"
+    },
+    {
+      "id": "node_007",
+      "speakerId": "teddy",
+      "text": "It is okay. Try saying: Yes, I love my mother.",
+      "duration": 3200,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_008"
+    },
+    {
+      "id": "node_008",
+      "speakerId": "teddy",
+      "text": "Family love makes us warm and happy.",
+      "duration": 2800,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_009"
+    },
+    {
+      "id": "node_009",
+      "speakerId": "billy",
+      "text": "Awesome! Now give me a high five!",
+      "duration": 2600,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": "node_010"
+    },
+    {
+      "id": "node_010",
+      "speakerId": "user",
+      "interactionData": {
+        "mode": "high_five"
+      },
+      "responses": {
+        "onSuccess": "node_011"
+      },
+      "animations": [],
+      "moves": []
+    },
+    {
+      "id": "node_011",
+      "speakerId": "teddy",
+      "text": "High five! Great job today!",
+      "duration": 2400,
+      "audio": "",
+      "animations": [],
+      "moves": [],
+      "next": ""
+    }
+  ]
+}

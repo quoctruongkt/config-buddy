@@ -1,17 +1,24 @@
 {
   "characterIds": ["billy", "teddy"],
   "animations": [
-    "Bow",
-    "Clapping",
-    "Crying",
-    "HandForward",
-    "HeadShake",
     "Idle",
-    "Listening",
-    "Thinking",
-    "Walking",
-    "Waving",
-    "WavingUp"
+    "Congratulation",
+    "Congratulation2",
+    "FlyInLeft",
+    "FlyInRight",
+    "Jump",
+    "ListenStart",
+    "StartListen",
+    "EndListen",
+    "Wavehand",
+    "Conversation1",
+    "Conversation2",
+    "Conversation3",
+    "Conversation4",
+    "StartThink",
+    "EndThink"
   ],
-  "expressions": ["happy", "sad"]
+  "expressions": ["happy", "sad"],
+  "backgroundMusicId": ["background1"],
+  "sfxId": ["congratulation1", "fly1", "fly2", "win"]
 }

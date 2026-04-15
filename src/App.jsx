@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import ReactFlow, { MarkerType, Position } from "reactflow";
 import "reactflow/dist/style.css";
+import GraphCanvas from "./GraphCanvas";
 import "./App.css";
 import animationOptions from "./config/animation-options.json";
+import JSZip from "jszip";
 
 const initialData = {
   lessonId: "lesson_intro_001",
   uploadBasePath: "/uploads",
   uploadApiUrl: "https://media.monkeyuni.net/api/upload",
-  uploadToken:
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6NDY4MjE5NCwiZnVsbG5hbWUiOiJodW5nLnRyYW5AbW9ua2V5LmVkdS52biIsImVtYWlsIjoiaHVuZy50cmFuQG1vbmtleS5lZHUudm4iLCJwYXNzd29yZCI6ImRjZDY3YmEwOTViZTdkNzA4NmYyMzE1MjdlM2NkODY2IiwiYWdlbnRfaWQiOjAsImltYWdlIjoiIiwiZ3JvdXBfaWRfcGVybWlzc2lvbl9nZXRfbmV3X29yZGVyIjpudWxsLCJnZXRfb3JkZXIiOiIiLCJtYXhfY2FsbCI6MCwidGltZV9kdXJpbmdfc3lzdGVtIjo2MCwiY2FyZXNvZnRfYWdlbnRfaWQiOm51bGwsInJvbGVfaWRzIjp7IjEiOnsicm9sZV9pZCI6MX0sIjE2Ijp7InJvbGVfaWQiOjE2fSwiMTciOnsicm9sZV9pZCI6MTd9LCIyMyI6eyJyb2xlX2lkIjoyM30sIjI1Ijp7InJvbGVfaWQiOjI1fSwiMjciOnsicm9sZV9pZCI6Mjd9LCIyOCI6eyJyb2xlX2lkIjoyOH0sIjMxIjp7InJvbGVfaWQiOjMxfSwiNTEiOnsicm9sZV9pZCI6NTF9LCI1MiI6eyJyb2xlX2lkIjo1Mn0sIjExMSI6eyJyb2xlX2lkIjoxMTF9LCIxMzUiOnsicm9sZV9pZCI6MTM1fSwiMTQwIjp7InJvbGVfaWQiOjE0MH19LCJyb2xlX25hbWUiOnsiTUFOQUdFIjoiTUFOQUdFIiwiTUFSS0VUSU5HIjoiTUFSS0VUSU5HIiwiQ1VTVE9NRVJfQ0FSRSI6IkNVU1RPTUVSX0NBUkUiLCJPUEVSQVRPUiI6Ik9QRVJBVE9SIiwiT1BFUkFUT1JfTUFOQUdFIjoiT1BFUkFUT1JfTUFOQUdFIiwiQ1VTVE9NRVJfQ0FSRV9NQU5BR0UiOiJDVVNUT01FUl9DQVJFX01BTkFHRSIsIkNVU1RPTUVSX0NBUkVfTEVBRCI6IkNVU1RPTUVSX0NBUkVfTEVBRCIsIk1BUktFVElOR19NQU5BR0UiOiJNQVJLRVRJTkdfTUFOQUdFIiwiSFJfUXVcdTFlYTNuX0xcdTAwZmQiOiJIUl9RdVx1MWVhM25fTFx1MDBmZCIsIkhSIjoiSFIiLCJBRE1JTl9NT05LRVlfVFVUT1JJTkciOiJBRE1JTl9NT05LRVlfVFVUT1JJTkciLCJDUkVBVEVfTElDRU5DRSI6IkNSRUFURV9MSUNFTkNFIiwiVEVDSCI6IlRFQ0gifSwiY291bnRyeSI6eyI2MiI6eyJjb3VudHJ5X2NvZGUiOjYyfSwiNjYiOnsiY291bnRyeV9jb2RlIjo2Nn0sIjg0Ijp7ImNvdW50cnlfY29kZSI6ODR9LCI4ODAiOnsiY291bnRyeV9jb2RlIjo4ODB9fSwiaXNfY3VzdG9tZXJfY2FyZV9zMSI6ZmFsc2UsImlzX2N1c3RvbWVyX2NhcmVfczIiOmZhbHNlLCJpc19jdXN0b21lcl9jYXJlX2xlYWQiOnRydWUsImlzX2N1c3RvbWVyX2NhcmVfbWFuYWdlIjp0cnVlLCJpc19zYWxlIjpmYWxzZSwiaXNfbWt0Ijp0cnVlLCJpc19zYWxlX2FkbWluIjpmYWxzZSwiaXNfb3BlcmF0ZSI6dHJ1ZSwiaXNfb3BlcmF0ZV9wcmludCI6ZmFsc2UsImlzX29wZXJhdGVfYWRtaW4iOnRydWUsImlzX2V4cG9ydF9kYXRhIjpmYWxzZSwiZXhwIjoxNzc0MzIxNDcwfQ.4M1PTTEXldpFsb7I888KyB_V-SAaxkChAcgaC1Sl5CA",
+  uploadToken: "a813ec766197294184a938c331b08e7e",
   uploadFolderPath: "buddy-ai",
   uploadBucket: "monkeymedia2020",
   uploadDescription: "",
@@ -20,12 +20,19 @@ const initialData = {
   elevenModelId: "eleven_multilingual_v2",
   elevenOutputFormat: "mp3_44100_128",
   background: "",
+  backgroundMusicId: "",
   backgroundFileName: "",
   characters: ["billy", "teddy"],
   dialogueNodes: [],
 };
 
-const movePositionOptions = ["out-left", "left", "out-right", "right", "center"];
+const movePositionOptions = [
+  "out-left",
+  "left",
+  "out-right",
+  "right",
+  "center",
+];
 
 function createDialogueNode(index = 1) {
   return {
@@ -55,6 +62,7 @@ function createInteractionNode(index = 1) {
       onSuccess: "",
       onFail: "",
       onTimeout: "",
+      onExhausted: "",
     },
     animations: [],
     moves: [],
@@ -79,8 +87,11 @@ function App() {
     backgroundUpload: false,
     ttsGenerate: false,
     audioUpload: false,
+    submit: false,
   });
+  const [submitResult, setSubmitResult] = useState("");
   const [subActionDurationError, setSubActionDurationError] = useState("");
+  const [graphExpanded, setGraphExpanded] = useState(false);
 
   const selectedIndex = lesson.dialogueNodes.findIndex(
     (node) => node.id === selectedNodeId,
@@ -105,6 +116,11 @@ function App() {
       ? Array.from(new Set([...characterIdOptions, "user"]))
       : characterIdOptions;
   }, [selectedNode, characterIdOptions]);
+  const backgroundMusicOptions = useMemo(
+    () =>
+      animationOptions.backgroundMusicId || animationOptions.backgroundMusic || [],
+    [],
+  );
 
   const outputJson = useMemo(() => {
     const normalizedNodes = lesson.dialogueNodes.map((node) => {
@@ -119,6 +135,7 @@ function App() {
           anim: subAction.anim || "",
           expression: subAction.expression || "",
           lookAt: subAction.lookAt || "",
+          sfxId: subAction.sfxId || "",
           ...(subAction.textSegment
             ? { textSegment: subAction.textSegment }
             : {}),
@@ -151,6 +168,7 @@ function App() {
             onSuccess: node.responses?.onSuccess || "",
             onFail: node.responses?.onFail || "",
             onTimeout: node.responses?.onTimeout || "",
+            onExhausted: node.responses?.onExhausted || "",
           },
           animations: cleanedAnimations,
           moves: cleanedMoves,
@@ -173,6 +191,7 @@ function App() {
       {
         lessonId: lesson.lessonId,
         background: lesson.background,
+        backgroundMusicId: lesson.backgroundMusicId || "",
         characters: lesson.characters.filter(Boolean),
         dialogueNodes: normalizedNodes,
       },
@@ -276,7 +295,10 @@ function App() {
     if (!characterPicker) return;
     setLesson((prev) => {
       if ((prev.characters || []).includes(characterPicker)) return prev;
-      return { ...prev, characters: [...(prev.characters || []), characterPicker] };
+      return {
+        ...prev,
+        characters: [...(prev.characters || []), characterPicker],
+      };
     });
   }
 
@@ -506,6 +528,7 @@ function App() {
           onSuccess: "",
           onFail: "",
           onTimeout: "",
+          onExhausted: "",
         },
         animations: selectedNode.animations || [],
         moves: selectedNode.moves || [],
@@ -572,6 +595,7 @@ function App() {
         anim: "",
         expression: "",
         lookAt: "",
+        sfxId: "",
         textSegment: "",
       },
     ];
@@ -645,7 +669,9 @@ function App() {
   }
 
   function deleteMove(moveIndex) {
-    const next = (selectedNode.moves || []).filter((_, index) => index !== moveIndex);
+    const next = (selectedNode.moves || []).filter(
+      (_, index) => index !== moveIndex,
+    );
     updateSelectedNodeField("moves", next);
   }
 
@@ -667,6 +693,61 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  async function submitLesson() {
+    const lessonId = (lesson.lessonId || "lesson").trim();
+    const apiUrl = (lesson.uploadApiUrl || "").trim();
+    const token = (lesson.uploadToken || "").trim();
+
+    if (!apiUrl) {
+      setSubmitResult("Missing upload API URL");
+      return;
+    }
+    if (!token) {
+      setSubmitResult("Missing token header");
+      return;
+    }
+
+    setLoading((prev) => ({ ...prev, submit: true }));
+    setSubmitResult("Đang nén và upload...");
+
+    try {
+      const zip = new JSZip();
+      zip.file("data.json", outputJson);
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const randomSuffix = Math.random().toString(36).slice(2, 6);
+      const zipFile = new File([zipBlob], `${lessonId}_${randomSuffix}.zip`, {
+        type: "application/zip",
+      });
+
+      const form = new FormData();
+      form.append("file", zipFile);
+      form.append("description", lesson.uploadDescription || "");
+      form.append("folder_path", lesson.uploadFolderPath || "");
+      form.append("bucket", lesson.uploadBucket || "");
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { token },
+        body: form,
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setSubmitResult(
+          `Upload thất bại: ${data?.message || response.status}`,
+        );
+        return;
+      }
+
+      const path = extractUploadedPath(data, zipFile.name);
+      setSubmitResult(`Upload thành công! Path: ${path}`);
+    } catch {
+      setSubmitResult("Lỗi network/CORS khi upload");
+    } finally {
+      setLoading((prev) => ({ ...prev, submit: false }));
+    }
+  }
+
   async function importJsonConfig(file) {
     if (!file) return;
     try {
@@ -680,13 +761,35 @@ function App() {
         const baseNode = {
           id: node?.id || `node_${String(index + 1).padStart(3, "0")}`,
           speakerId: node?.speakerId || "",
-          animations: Array.isArray(node?.animations) ? node.animations : [],
+          animations: Array.isArray(node?.animations)
+            ? node.animations.map((animation) => ({
+                characterId: animation?.characterId || "",
+                subActions: Array.isArray(animation?.subActions)
+                  ? animation.subActions.map((subAction) => ({
+                      startTime: Number(subAction?.startTime) || 0,
+                      isLoop: !!subAction?.isLoop,
+                      duration:
+                        subAction?.duration === "" ||
+                        subAction?.duration === undefined
+                          ? ""
+                          : Number(subAction.duration) || 0,
+                      anim: subAction?.anim || "",
+                      expression: subAction?.expression || "",
+                      lookAt: subAction?.lookAt || "",
+                      sfxId: subAction?.sfxId || "",
+                      textSegment: subAction?.textSegment || "",
+                    }))
+                  : [],
+              }))
+            : [],
           moves: Array.isArray(node?.moves)
             ? node.moves.map((move) => ({
                 characterId: move?.characterId || "",
                 startTime: Number(move?.startTime) || 0,
                 duration: Number(move?.duration) || 0,
-                from: movePositionOptions.includes(move?.from) ? move.from : "center",
+                from: movePositionOptions.includes(move?.from)
+                  ? move.from
+                  : "center",
                 to: movePositionOptions.includes(move?.to) ? move.to : "center",
                 ...(move?.rotateWithMovement !== undefined
                   ? { rotateWithMovement: !!move.rotateWithMovement }
@@ -712,6 +815,7 @@ function App() {
               onSuccess: node?.responses?.onSuccess || "",
               onFail: node?.responses?.onFail || "",
               onTimeout: node?.responses?.onTimeout || "",
+              onExhausted: node?.responses?.onExhausted || "",
             },
           };
         }
@@ -730,6 +834,7 @@ function App() {
         ...prev,
         lessonId: parsed?.lessonId || prev.lessonId,
         background: parsed?.background || "",
+        backgroundMusicId: parsed?.backgroundMusicId || "",
         characters: Array.isArray(parsed?.characters) ? parsed.characters : [],
         dialogueNodes: normalizedNodes,
         uploadStatus: `Imported JSON: ${file.name}`,
@@ -755,56 +860,18 @@ function App() {
       return sum + subTotal;
     }, 0);
   }, [selectedNode]);
-  const relationshipGraph = useMemo(() => {
-    const idSet = new Set(nodeIdOptions);
-    const flowNodes = lesson.dialogueNodes.map((node, index) => ({
-      id: node.id,
-      data: {
-        label: `${node.id} (${isInteractionNode(node) ? "interaction" : "dialogue"})`,
-      },
-      position: {
-        x: 20,
-        y: 16 + index * 74,
-      },
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Top,
-      style:
-        selectedNodeId === node.id
-          ? { border: "2px solid #11698e", borderRadius: 8, padding: "6px 10px", fontSize: 12, width: 180 }
-          : { border: "1px solid #c5d1dc", borderRadius: 8, padding: "6px 10px", fontSize: 12, width: 180 },
-    }));
-
-    const edges = [];
-    const pushEdge = (fromId, toId, label) => {
-      if (!toId || !idSet.has(toId)) return;
-      edges.push({
-        id: `${fromId}-${label}-${toId}`,
-        source: fromId,
-        target: toId,
-        label,
-        type: "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed },
-        style: { strokeWidth: 1.4, stroke: label === "next" ? "#11698e" : "#7a5ea6" },
-        labelStyle: { fontSize: 10 },
+  function handleGraphEdgeUpdate(sourceId, label, newTargetId) {
+    setLesson((prev) => {
+      const nodes = prev.dialogueNodes.map((node) => {
+        if (node.id !== sourceId) return node;
+        if (node.responses) {
+          return { ...node, responses: { ...node.responses, [label]: newTargetId } };
+        }
+        return { ...node, next: newTargetId };
       });
-    };
-
-    lesson.dialogueNodes.forEach((node) => {
-      if (isInteractionNode(node)) {
-        pushEdge(node.id, node.responses?.onSuccess, "onSuccess");
-        pushEdge(node.id, node.responses?.onFail, "onFail");
-        pushEdge(node.id, node.responses?.onTimeout, "onTimeout");
-      } else {
-        pushEdge(node.id, node.next, "next");
-      }
+      return { ...prev, dialogueNodes: nodes };
     });
-
-    return { flowNodes, edges };
-  }, [lesson.dialogueNodes, nodeIdOptions, selectedNodeId]);
-  const graphHeight = useMemo(
-    () => Math.max(420, lesson.dialogueNodes.length * 86 + 40),
-    [lesson.dialogueNodes.length],
-  );
+  }
 
   useEffect(() => {
     setSubActionDurationError("");
@@ -836,6 +903,19 @@ function App() {
             />
             <span className="import-json-btn">Upload JSON</span>
           </label>
+          <button
+            type="button"
+            onClick={submitLesson}
+            disabled={loading.submit}
+            style={{ background: loading.submit ? undefined : "#22c55e" }}
+          >
+            {loading.submit ? "Đang upload..." : "Submit"}
+          </button>
+          {submitResult && (
+            <span style={{ fontSize: "0.8rem", maxWidth: 300, wordBreak: "break-all" }}>
+              {submitResult}
+            </span>
+          )}
         </div>
       </header>
 
@@ -859,6 +939,22 @@ function App() {
                 updateLessonField("background", event.target.value)
               }
             />
+          </label>
+          <label>
+            Background Music ID
+            <select
+              value={lesson.backgroundMusicId || ""}
+              onChange={(event) =>
+                updateLessonField("backgroundMusicId", event.target.value)
+              }
+            >
+              <option value="">-- Select background music --</option>
+              {backgroundMusicOptions.map((backgroundMusicId) => (
+                <option key={backgroundMusicId} value={backgroundMusicId}>
+                  {backgroundMusicId}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             Upload Base Path
@@ -1027,29 +1123,31 @@ function App() {
           </div>
 
           <div className="node-items">
-            <small>Click node in graph to edit</small>
+            <small>Click node để edit</small>
           </div>
 
-          <h3>Relationship Graph</h3>
-          <div className="tree-view graph-view" style={{ height: graphHeight }}>
-            <ReactFlow
-              nodes={relationshipGraph.flowNodes}
-              edges={relationshipGraph.edges}
-              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-              minZoom={1}
-              maxZoom={1}
-              nodesDraggable={false}
-              nodesConnectable={false}
-              elementsSelectable={false}
-              panOnDrag={false}
-              zoomOnScroll={false}
-              zoomOnPinch={false}
-              zoomOnDoubleClick={false}
-              onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-            >
-              {null}
-            </ReactFlow>
-          </div>
+          <button type="button" className="graph-expand-btn" onClick={() => setGraphExpanded(true)}>
+            Xem sơ đồ quan hệ
+          </button>
+
+          {graphExpanded && (
+            <div className="graph-modal-overlay" onClick={() => setGraphExpanded(false)}>
+              <div className="graph-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="graph-modal-header">
+                  <span>Sơ đồ quan hệ</span>
+                  <button type="button" onClick={() => setGraphExpanded(false)}>✕ Đóng</button>
+                </div>
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <GraphCanvas
+                    dialogueNodes={lesson.dialogueNodes}
+                    selectedNodeId={selectedNodeId}
+                    onNodeClick={(id) => { setSelectedNodeId(id); setGraphExpanded(false); }}
+                    onEdgeUpdate={handleGraphEdgeUpdate}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
 
         <section className="panel editor">
@@ -1071,9 +1169,11 @@ function App() {
                   Node ID
                   <input
                     value={selectedNode.id}
-                    onChange={(event) =>
-                      updateSelectedNodeField("id", event.target.value)
-                    }
+                    onChange={(event) => {
+                      const newId = event.target.value;
+                      updateSelectedNodeField("id", newId);
+                      setSelectedNodeId(newId);
+                    }}
                   />
                 </label>
                 <label>
@@ -1173,7 +1273,7 @@ function App() {
                   </div>
 
                   <h3>Responses</h3>
-                  <div className="grid three">
+                  <div className="grid four">
                     <label>
                       onSuccess
                       <select
@@ -1226,6 +1326,25 @@ function App() {
                         <option value="">-- Select node --</option>
                         {targetNodeOptions.map((nodeId) => (
                           <option key={`timeout-${nodeId}`} value={nodeId}>
+                            {nodeId}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      onExhausted
+                      <select
+                        value={selectedNode.responses?.onExhausted || ""}
+                        onChange={(event) =>
+                          updateSelectedNodeNested(
+                            ["responses", "onExhausted"],
+                            event.target.value,
+                          )
+                        }
+                      >
+                        <option value="">-- Select node --</option>
+                        {targetNodeOptions.map((nodeId) => (
+                          <option key={`exhausted-${nodeId}`} value={nodeId}>
                             {nodeId}
                           </option>
                         ))}
@@ -1478,11 +1597,13 @@ function App() {
                                 }
                               >
                                 <option value="">-- Select anim --</option>
-                                {(animationOptions.animations || []).map((anim) => (
-                                  <option key={anim} value={anim}>
-                                    {anim}
-                                  </option>
-                                ))}
+                                {(animationOptions.animations || []).map(
+                                  (anim) => (
+                                    <option key={anim} value={anim}>
+                                      {anim}
+                                    </option>
+                                  ),
+                                )}
                               </select>
                             </label>
                             <label>
@@ -1498,17 +1619,21 @@ function App() {
                                   )
                                 }
                               >
-                                <option value="">-- Select expression --</option>
-                                {(animationOptions.expressions || []).map((expression) => (
-                                  <option key={expression} value={expression}>
-                                    {expression}
-                                  </option>
-                                ))}
+                                <option value="">
+                                  -- Select expression --
+                                </option>
+                                {(animationOptions.expressions || []).map(
+                                  (expression) => (
+                                    <option key={expression} value={expression}>
+                                      {expression}
+                                    </option>
+                                  ),
+                                )}
                               </select>
                             </label>
                             <label>
                               Look At
-                              <input
+                              <select
                                 value={subAction.lookAt || ""}
                                 onChange={(event) =>
                                   updateSubAction(
@@ -1518,7 +1643,40 @@ function App() {
                                     event.target.value,
                                   )
                                 }
-                              />
+                              >
+                                <option value="">-- None --</option>
+                                {[
+                                  ...characterIdOptions.filter(
+                                    (id) => id !== animation.characterId,
+                                  ),
+                                  "user",
+                                ].map((id) => (
+                                  <option key={id} value={id}>
+                                    {id}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              SFX ID
+                              <select
+                                value={subAction.sfxId || ""}
+                                onChange={(event) =>
+                                  updateSubAction(
+                                    animationIndex,
+                                    subActionIndex,
+                                    "sfxId",
+                                    event.target.value,
+                                  )
+                                }
+                              >
+                                <option value="">-- Select SFX --</option>
+                                {(animationOptions.sfxId || []).map((sfxId) => (
+                                  <option key={sfxId} value={sfxId}>
+                                    {sfxId}
+                                  </option>
+                                ))}
+                              </select>
                             </label>
                           </div>
 
@@ -1551,7 +1709,10 @@ function App() {
               </div>
 
               {(selectedNode.moves || []).map((move, moveIndex) => (
-                <article className="animation-card" key={`${move.characterId}-${moveIndex}`}>
+                <article
+                  className="animation-card"
+                  key={`${move.characterId}-${moveIndex}`}
+                >
                   <div className="section-head">
                     <strong>Move #{moveIndex + 1}</strong>
                     <button
@@ -1569,12 +1730,19 @@ function App() {
                       <select
                         value={move.characterId || ""}
                         onChange={(event) =>
-                          updateMove(moveIndex, "characterId", event.target.value)
+                          updateMove(
+                            moveIndex,
+                            "characterId",
+                            event.target.value,
+                          )
                         }
                       >
                         <option value="">-- Select character --</option>
                         {characterIdOptions.map((characterId) => (
-                          <option key={`move-${characterId}`} value={characterId}>
+                          <option
+                            key={`move-${characterId}`}
+                            value={characterId}
+                          >
                             {characterId}
                           </option>
                         ))}
@@ -1612,7 +1780,10 @@ function App() {
                         }
                       >
                         {movePositionOptions.map((position) => (
-                          <option key={`from-${moveIndex}-${position}`} value={position}>
+                          <option
+                            key={`from-${moveIndex}-${position}`}
+                            value={position}
+                          >
                             {position}
                           </option>
                         ))}
@@ -1628,7 +1799,10 @@ function App() {
                         }
                       >
                         {movePositionOptions.map((position) => (
-                          <option key={`to-${moveIndex}-${position}`} value={position}>
+                          <option
+                            key={`to-${moveIndex}-${position}`}
+                            value={position}
+                          >
                             {position}
                           </option>
                         ))}

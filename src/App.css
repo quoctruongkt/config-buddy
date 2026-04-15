@@ -84,6 +84,55 @@
   display: none;
 }
 
+.graph-expand-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+}
+
+.graph-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.graph-modal {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  width: 90vw;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.graph-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--panel-border);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.graph-modal-header button {
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.graph-modal > .react-flow-wrapper,
+.graph-modal > div:last-child {
+  flex: 1;
+  min-height: 0;
+}
+
 .tree-node {
   margin-bottom: 6px;
 }
@@ -136,6 +185,10 @@
 
 .grid.three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .full {
@@ -227,7 +280,8 @@ small {
   }
 
   .grid.two,
-  .grid.three {
+  .grid.three,
+  .grid.four {
     grid-template-columns: 1fr;
   }
 }
