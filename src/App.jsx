@@ -424,6 +424,21 @@ function App() {
     }
   }
 
+  async function handleLocalAudioFilePick(file) {
+    if (!file || !selectedNode || isInteractionNode(selectedNode)) return;
+    const durationMs = await readAudioDurationMs(file);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingAudioByNode((prev) => ({
+      ...prev,
+      [selectedNode.id]: { file, previewUrl, fileName: file.name, source: "local" },
+    }));
+    updateNodeFieldById(selectedNode.id, "audioFileName", file.name);
+    if (durationMs > 0) {
+      updateNodeFieldById(selectedNode.id, "duration", durationMs);
+    }
+    updateLessonField("uploadStatus", `Picked audio: ${file.name}. Click Upload Audio to send.`);
+  }
+
   async function uploadPendingAudio() {
     if (!selectedNode || isInteractionNode(selectedNode)) return;
 
@@ -1427,6 +1442,15 @@ function App() {
                     >
                       {loading.ttsGenerate ? "Generating..." : "Generate TTS"}
                     </button>
+                    <label style={{ cursor: "pointer" }}>
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        style={{ display: "none" }}
+                        onChange={(event) => handleLocalAudioFilePick(event.target.files?.[0])}
+                      />
+                      <span className="import-json-btn">Pick Audio File</span>
+                    </label>
                     <button
                       type="button"
                       onClick={uploadPendingAudio}
