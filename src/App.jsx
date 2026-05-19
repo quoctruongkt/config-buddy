@@ -1609,6 +1609,16 @@ function App() {
                             </label>
                             <label>
                               Anim
+                              {(() => {
+                                const selectedAnim = (animationOptions.animations || []).find(
+                                  (a) => a.id === subAction.anim,
+                                );
+                                return selectedAnim ? (
+                                  <span style={{ marginLeft: 6, fontSize: "0.8em", color: "#888" }}>
+                                    ⏱ {selectedAnim.duration > 0 ? `${selectedAnim.duration}ms` : "loop"}
+                                  </span>
+                                ) : null;
+                              })()}
                               <select
                                 value={subAction.anim || ""}
                                 onChange={(event) =>
@@ -1623,8 +1633,8 @@ function App() {
                                 <option value="">-- Select anim --</option>
                                 {(animationOptions.animations || []).map(
                                   (anim) => (
-                                    <option key={anim} value={anim}>
-                                      {anim}
+                                    <option key={anim.id} value={anim.id}>
+                                      {anim.id}{anim.duration > 0 ? ` (${anim.duration}ms)` : " (loop)"}
                                     </option>
                                   ),
                                 )}
