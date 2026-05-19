@@ -22,7 +22,7 @@ const initialData = {
   background: "",
   backgroundMusicId: "",
   backgroundFileName: "",
-  characters: ["billy", "teddy"],
+  characters: ["blue", "pink"],
   dialogueNodes: [],
 };
 
@@ -118,7 +118,9 @@ function App() {
   }, [selectedNode, characterIdOptions]);
   const backgroundMusicOptions = useMemo(
     () =>
-      animationOptions.backgroundMusicId || animationOptions.backgroundMusic || [],
+      animationOptions.backgroundMusicId ||
+      animationOptions.backgroundMusic ||
+      [],
     [],
   );
 
@@ -430,13 +432,21 @@ function App() {
     const previewUrl = URL.createObjectURL(file);
     setPendingAudioByNode((prev) => ({
       ...prev,
-      [selectedNode.id]: { file, previewUrl, fileName: file.name, source: "local" },
+      [selectedNode.id]: {
+        file,
+        previewUrl,
+        fileName: file.name,
+        source: "local",
+      },
     }));
     updateNodeFieldById(selectedNode.id, "audioFileName", file.name);
     if (durationMs > 0) {
       updateNodeFieldById(selectedNode.id, "duration", durationMs);
     }
-    updateLessonField("uploadStatus", `Picked audio: ${file.name}. Click Upload Audio to send.`);
+    updateLessonField(
+      "uploadStatus",
+      `Picked audio: ${file.name}. Click Upload Audio to send.`,
+    );
   }
 
   async function uploadPendingAudio() {
@@ -748,9 +758,7 @@ function App() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setSubmitResult(
-          `Upload thất bại: ${data?.message || response.status}`,
-        );
+        setSubmitResult(`Upload thất bại: ${data?.message || response.status}`);
         return;
       }
 
@@ -880,7 +888,10 @@ function App() {
       const nodes = prev.dialogueNodes.map((node) => {
         if (node.id !== sourceId) return node;
         if (node.responses) {
-          return { ...node, responses: { ...node.responses, [label]: newTargetId } };
+          return {
+            ...node,
+            responses: { ...node.responses, [label]: newTargetId },
+          };
         }
         return { ...node, next: newTargetId };
       });
@@ -927,7 +938,13 @@ function App() {
             {loading.submit ? "Đang upload..." : "Submit"}
           </button>
           {submitResult && (
-            <span style={{ fontSize: "0.8rem", maxWidth: 300, wordBreak: "break-all" }}>
+            <span
+              style={{
+                fontSize: "0.8rem",
+                maxWidth: 300,
+                wordBreak: "break-all",
+              }}
+            >
               {submitResult}
             </span>
           )}
@@ -1141,22 +1158,34 @@ function App() {
             <small>Click node để edit</small>
           </div>
 
-          <button type="button" className="graph-expand-btn" onClick={() => setGraphExpanded(true)}>
+          <button
+            type="button"
+            className="graph-expand-btn"
+            onClick={() => setGraphExpanded(true)}
+          >
             Xem sơ đồ quan hệ
           </button>
 
           {graphExpanded && (
-            <div className="graph-modal-overlay" onClick={() => setGraphExpanded(false)}>
+            <div
+              className="graph-modal-overlay"
+              onClick={() => setGraphExpanded(false)}
+            >
               <div className="graph-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="graph-modal-header">
                   <span>Sơ đồ quan hệ</span>
-                  <button type="button" onClick={() => setGraphExpanded(false)}>✕ Đóng</button>
+                  <button type="button" onClick={() => setGraphExpanded(false)}>
+                    ✕ Đóng
+                  </button>
                 </div>
                 <div style={{ flex: 1, minHeight: 0 }}>
                   <GraphCanvas
                     dialogueNodes={lesson.dialogueNodes}
                     selectedNodeId={selectedNodeId}
-                    onNodeClick={(id) => { setSelectedNodeId(id); setGraphExpanded(false); }}
+                    onNodeClick={(id) => {
+                      setSelectedNodeId(id);
+                      setGraphExpanded(false);
+                    }}
                     onEdgeUpdate={handleGraphEdgeUpdate}
                   />
                 </div>
@@ -1447,7 +1476,9 @@ function App() {
                         type="file"
                         accept="audio/*"
                         style={{ display: "none" }}
-                        onChange={(event) => handleLocalAudioFilePick(event.target.files?.[0])}
+                        onChange={(event) =>
+                          handleLocalAudioFilePick(event.target.files?.[0])
+                        }
                       />
                       <span className="import-json-btn">Pick Audio File</span>
                     </label>
@@ -1610,12 +1641,21 @@ function App() {
                             <label>
                               Anim
                               {(() => {
-                                const selectedAnim = (animationOptions.animations || []).find(
-                                  (a) => a.id === subAction.anim,
-                                );
+                                const selectedAnim = (
+                                  animationOptions.animations || []
+                                ).find((a) => a.id === subAction.anim);
                                 return selectedAnim ? (
-                                  <span style={{ marginLeft: 6, fontSize: "0.8em", color: "#888" }}>
-                                    ⏱ {selectedAnim.duration > 0 ? `${selectedAnim.duration}ms` : "loop"}
+                                  <span
+                                    style={{
+                                      marginLeft: 6,
+                                      fontSize: "0.8em",
+                                      color: "#888",
+                                    }}
+                                  >
+                                    ⏱{" "}
+                                    {selectedAnim.duration > 0
+                                      ? `${selectedAnim.duration}ms`
+                                      : "loop"}
                                   </span>
                                 ) : null;
                               })()}
@@ -1634,7 +1674,10 @@ function App() {
                                 {(animationOptions.animations || []).map(
                                   (anim) => (
                                     <option key={anim.id} value={anim.id}>
-                                      {anim.id}{anim.duration > 0 ? ` (${anim.duration}ms)` : " (loop)"}
+                                      {anim.id}
+                                      {anim.duration > 0
+                                        ? ` (${anim.duration}ms)`
+                                        : " (loop)"}
                                     </option>
                                   ),
                                 )}
